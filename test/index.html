@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HoverLens test page</title>
+<style>
+  body { font: 14px -apple-system, sans-serif; margin: 24px; }
+  section { margin: 18px 0; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+  .overlay-wrap { position: relative; display: inline-block; }
+  .overlay-wrap .cover { position: absolute; inset: 0; }
+  .bg { width: 200px; height: 125px; background: url(big.png) center/cover; }
+</style>
+</head>
+<body>
+  <h1>HoverLens test page</h1>
+  <section id="t1">1. Thumbnail (big.png shown at 200px): <img id="thumb" src="big.png" width="200" alt="Big gradient photo"></section>
+  <section id="t2">2. Text link to an image: <a id="textlink" href="big2.png">big2.png</a></section>
+  <section id="t3">3. Image already at full size (no popup expected): <img id="fullsize" src="small.png" alt="small"></section>
+  <section id="t4">4. srcset (small shown, big in srcset): <img id="srcset" src="small.png" srcset="small.png 160w, big.png 1600w" sizes="160px" width="160"></section>
+  <section id="t5">5. Overlay covering an image: <span class="overlay-wrap"><img id="covered" src="big2.png" width="120"><span class="cover"></span></span></section>
+  <section id="t6">6. Background image: <div id="bg" class="bg"></div></section>
+  <section id="t7">7. Page link resolved by custom @meta rule (album of 2): <a id="album" href="album.html">album page</a></section>
+  <section id="t8">8. Blocked by custom rule: <a id="blockedlink" href="big.png?block">blocked</a></section>
+
+  <script>
+    // Minimal stand-in for the WebExtension APIs so content.js can run on a normal page.
+    const settings = {
+      delay: 100,
+      userRules: '^http://localhost:\\d+/test/album\\.html => @meta\n\\?block$ => !'
+    };
+    globalThis.browser = {
+      storage: {
+        sync: { get: async d => ({ ...d, ...settings }) },
+        onChanged: { addListener() {} }
+      },
+      runtime: {
+        sendMessage: async m => {
+          if (m.type === 'fetchText') { const r = await fetch(m.url); return { text: await r.text(), url: r.url }; }
+          if (m.type === 'openTab') { window.__opened = m.url; return { ok: true }; }
+          return { error: 'unsupported in test' };
+        }
+      }
+    };
+  </script>
+  <script src="../Extension/defaults.js"></script>
+  <script src="../Extension/rules.js"></script>
+  <script src="../Extension/content.js"></script>
+</body>
+</html>

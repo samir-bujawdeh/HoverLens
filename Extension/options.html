@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HoverLens Settings</title>
+<link rel="stylesheet" href="ui.css">
+<style>
+  main { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  header img { width: 36px; height: 36px; }
+  h1 { font-size: 22px; margin: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 28px 0 6px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--line); }
+  .row:first-child { border-top: 0; }
+  .row small { display: block; color: var(--muted); }
+  .block { padding: 12px 0; }
+  .block small { display: block; color: var(--muted); margin-bottom: 8px; }
+  input[type=number] { width: 90px; }
+  #status { position: fixed; right: 16px; bottom: 16px; background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; opacity: 0; transition: opacity .2s; }
+  #status.on { opacity: 1; }
+  #ruleErrors { color: var(--err); font-size: 12px; white-space: pre-line; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  tr:first-child td { border-top: 0; }
+  td:first-child { width: 42%; white-space: nowrap; }
+  code { font: 12px ui-monospace, Menlo, monospace; }
+  .actions { margin-top: 24px; display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="images/icon-96.png" alt=""><h1>HoverLens</h1></header>
+
+  <h2>Behavior</h2>
+  <div class="card">
+    <label class="row"><span>Enabled</span><input type="checkbox" class="switch" data-k="enabled"></label>
+    <label class="row"><span>Hover delay<small>Milliseconds before the popup appears.</small></span><input type="number" min="0" max="3000" step="50" data-k="delay"></label>
+    <label class="row"><span>Show only while holding<small>When set, hovering does nothing until you press this key.</small></span>
+      <select data-k="trigger"><option value="none">Nothing (just hover)</option><option value="shift">Shift</option><option value="alt">Option</option><option value="ctrl">Control</option><option value="meta">Command</option></select></label>
+    <label class="row"><span>Popup position</span>
+      <select data-k="displayMode"><option value="auto">Beside the cursor, or centered if bigger</option><option value="side">Always beside the cursor</option><option value="center">Always centered</option></select></label>
+    <label class="row"><span>Mouse wheel</span>
+      <select data-k="wheel"><option value="zoom">Zoom (Shift: next/previous in album)</option><option value="album">Next/previous in album (Shift: zoom)</option><option value="off">Scroll the page</option></select></label>
+    <label class="row"><span>Skip images that aren't bigger<small>Don't pop up unless the full size is at least this many times the thumbnail.</small></span><input type="number" min="1" max="5" step="0.05" data-k="minScaleUp"></label>
+  </div>
+
+  <h2>Appearance</h2>
+  <div class="card">
+    <label class="row"><span>Show caption and size bar</span><input type="checkbox" class="switch" data-k="showBar"></label>
+    <label class="row"><span>Dim the page behind centered popups</span><input type="checkbox" class="switch" data-k="backdrop"></label>
+    <label class="row"><span>Mute videos</span><input type="checkbox" class="switch" data-k="videoMuted"></label>
+    <label class="row"><span>Show video controls</span><input type="checkbox" class="switch" data-k="videoControls"></label>
+  </div>
+
+  <h2>Turned off on these sites</h2>
+  <div class="card"><div class="block">
+    <small>One hostname per line. Subdomains are included.</small>
+    <textarea rows="4" data-k="blacklist" spellcheck="false" placeholder="example.com"></textarea>
+  </div></div>
+
+  <h2>Custom rules</h2>
+  <div class="card"><div class="block">
+    <small>One rule per line: <code>regex =&gt; full-size URL</code>. Use <code>$1</code>, <code>$2</code>… for capture groups and <code>$&amp;</code> for the whole match.
+      <code>a || b</code> tries <code>a</code> then <code>b</code>. Prefix with <code>video:</code> for videos.
+      <code>@meta</code> reads the page's preview image. <code>!</code> means never pop up. Your rules run before the built-in ones.</small>
+    <textarea rows="7" data-k="userRules" spellcheck="false" placeholder="# Example: example-cdn.com thumbnails → originals&#10;^(https://cdn\.example\.com/img/)thumb_(\w+\.jpg) => $1$2&#10;^https://photos\.example\.org/p/\d+ => @meta"></textarea>
+    <div id="ruleErrors"></div>
+  </div></div>
+
+  <h2>Keyboard (while a popup is showing)</h2>
+  <div class="card"><div class="block"><table>
+    <tr><td><kbd>Esc</kbd> or click</td><td>Close (stays closed until you hover something else)</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> <kbd>Home</kbd> <kbd>End</kbd></td><td>Previous / next / first / last in an album</td></tr>
+    <tr><td><kbd>+</kbd> <kbd>−</kbd> mouse wheel</td><td>Zoom in / out</td></tr>
+    <tr><td><kbd>Z</kbd></td><td>Toggle actual size (100%)</td></tr>
+    <tr><td><kbd>0</kbd></td><td>Reset zoom, rotation and flips</td></tr>
+    <tr><td><kbd>R</kbd> / <kbd>Shift</kbd>+<kbd>R</kbd></td><td>Rotate clockwise / counter-clockwise</td></tr>
+    <tr><td><kbd>H</kbd> / <kbd>V</kbd></td><td>Flip horizontally / vertically</td></tr>
+    <tr><td><kbd>L</kbd></td><td>Pin the popup so you can move the mouse away, drag it and zoom it (<kbd>L</kbd> again to close)</td></tr>
+    <tr><td><kbd>Enter</kbd> / <kbd>O</kbd></td><td>Open in a new tab (<kbd>Shift</kbd>: in the background)</td></tr>
+    <tr><td><kbd>S</kbd></td><td>Save the image or video</td></tr>
+    <tr><td><kbd>U</kbd></td><td>Copy the media link</td></tr>
+    <tr><td><kbd>C</kbd></td><td>Show / hide the caption bar</td></tr>
+    <tr><td><kbd>Space</kbd> / <kbd>M</kbd></td><td>Videos: play/pause, mute/unmute</td></tr>
+  </table></div></div>
+
+  <div class="actions"><button id="reset">Restore defaults</button></div>
+</main>
+<div id="status">Saved</div>
+<script src="defaults.js"></script>
+<script src="rules.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
